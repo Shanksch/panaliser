@@ -53,16 +53,23 @@ def extract_key_clauses(text: str, top_n: int = 5):
     return [phrase for phrase, score in key_phrases]
 
 
-file_path = input("Enter the path of the pdf file: ")
-text = extract_text_from_pdf(file_path)
-text = clean_pdf_text(text)
-chunks = chunk_text(text)
-summaries = [pipe(c, max_length=130, min_length=30, truncation=True)[0]["summary_text"]
+
+def run_pipeline(file_path):
+    text = extract_text_from_pdf(file_path)
+    text = clean_pdf_text(text)
+    chunks = chunk_text(text)
+    summaries = [pipe(c, max_length=130, min_length=30, truncation=True)[0]["summary_text"]
              for c in chunks]
+    key_clauses = []
+    for chunk in chunks:
+        key_clauses.extend(extract_key_clauses(chunk, top_n=4))
+    return {
+        "summary": summaries,
+        "clauses": key_clauses
+    }
 
+if __name__ == "__main__":
+    import sys, json
+    pdf = sys.argv[1]
+    print(json.dumps(run_pipeline(pdf)))
 
-print(summaries)
-key_clauses = []
-for chunk in chunks:
-    key_clauses.extend(extract_key_clauses(chunk, top_n=4))
-print(key_clauses)
